@@ -1,6 +1,7 @@
 <?php
 require 'vendor/autoload.php';
 use \Firebase\JWT\JWT;
+use \Firebase\JWT\Key;
 
 include 'conexao.php';
 header("Access-Control-Allow-Origin: *");
@@ -10,17 +11,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 $headers = getallheaders();
 $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-// Verificação do token JWT
-if ($token) {
-    try {
-        $decoded = JWT::decode($token, 'seu_segredo');
-        // Continue com o restante da lógica, se necessário, após a verificação do token...
-    } catch (Exception $e) {
-        echo json_encode(["message" => "Token inválido"]);
-        http_response_code(401);
-        exit;
-    }
-}
+
 
 // Lógica de login
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -98,4 +89,4 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     http_response_code(405);
     exit;
 }
-?>
+
