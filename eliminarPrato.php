@@ -1,8 +1,27 @@
 <?php
-include 'conexao.php'; // Arquivo de conexão com o banco de dados
+require 'vendor/autoload.php';
+use \Firebase\JWT\JWT;
+use \Firebase\JWT\Key;
+
+include 'conexao.php';
+require 'verificarToken.php'; // Inclua o arquivo verificarToken.php
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: DELETE");
 header("Access-Control-Allow-Headers: Content-Type");
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
+    http_response_code(200);
+    exit;
+}
+
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 // Defina o tipo de usuário aqui conforme a lógica do seu sistema
 $tipo_usuario = 'restaurante'; 

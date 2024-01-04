@@ -12,7 +12,7 @@ if (isset($token)) {
 
     $data = json_decode(file_get_contents("php://input"));
 
-    $chave = "segredorest";
+    $chave = "seu_segredo";
 
     $tokenInfo = JWT::decode($token, new Key($chave, 'HS256'));
 
