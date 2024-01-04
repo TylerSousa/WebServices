@@ -13,7 +13,7 @@ $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 // Verificação do token JWT
 if ($token) {
     try {
-        $decoded = JWT::decode($token, 'seu_segredo', array('HS256'));
+        $decoded = JWT::decode($token, 'seu_segredo');
         // Continue com o restante da lógica, se necessário, após a verificação do token...
     } catch (Exception $e) {
         echo json_encode(["message" => "Token inválido"]);

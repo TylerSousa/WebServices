@@ -22,6 +22,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
+    $check_prato_stmt = $conn->prepare("SELECT id FROM restaurantes WHERE id = ?");
+    $check_prato_stmt->bind_param("i", $data->restaurante_id);
+    $check_prato_stmt->execute();
+    $check_prato_result = $check_prato_stmt->get_result();
+
+    if ($check_prato_result->num_rows === 0) {
+        echo json_encode(["message" => "Restaurante com ID {$data->restaurante_id} não encontrado"]);
+        http_response_code(404);
+        exit;
+    }
+
     // Insere os dados na tabela de pratos
     $stmt = $conn->prepare("INSERT INTO pratos (nome, descricao, preco, imagem, tipo, disponivel, restaurante_id ) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssdssii", $data->nome, $data->descricao, $data->preco, $data->imagem, $data->tipo, $data->disponivel, $data->restaurante_id );
