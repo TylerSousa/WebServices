@@ -1,107 +1,102 @@
 <?php
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 include 'conexao.php';
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, PUT");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: PUT");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if ($_SERVER["REQUEST_METHOD"] === "PUT") {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Verifica se os campos obrigatórios estão presentes
-    if (
-        empty($data->nome)
-        || empty($data->descricao)
-        || empty($data->preco)
-        || empty($data->imagem)
-        || empty($data->tipo)
-        || empty($data->disponivel)
-        || empty($data->restaurante_id)
-    ) {
-        echo json_encode(["message" => "Campos obrigatórios ausentes"]);
-        http_response_code(400);
+    // Verifica se o token está presente nos headers
+    $headers = getallheaders();
+    $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+
+    // Trim the token to remove whitespace or unexpected characters
+    $token = trim($token);
+
+    // Remove "Bearer " prefix if it's included
+    $token = str_replace("Bearer ", "", $token);
+
+    if (!$token) {
+        echo json_encode(["message" => "Token não fornecido"]);
+        http_response_code(401);
         exit;
     }
 
-    $check_restaurante_stmt = $conn->prepare("SELECT id FROM restaurantes WHERE id = ?");
-    $check_restaurante_stmt->bind_param("i", $data->restaurante_id);
-    $check_restaurante_stmt->execute();
-    $check_restaurante_result = $check_restaurante_stmt->get_result();
-
-    if ($check_restaurante_result->num_rows === 0) {
-        echo json_encode(["message" => "Restaurante com ID {$data->restaurante_id} não encontrado"]);
-        http_response_code(404);
-        exit;
-    }
-
-    // Insere os dados na tabela de pratos
-    $stmt = $conn->prepare("INSERT INTO pratos (nome, descricao, preco, imagem, tipo, disponivel, restaurante_id ) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdssii", $data->nome, $data->descricao, $data->preco, $data->imagem, $data->tipo, $data->disponivel, $data->restaurante_id);
+    try {
+        $key = 'segredo'; // Chave secreta para assinar o token
+        $algorithm = 'HS256'; // Algoritmo de assinatura
     
-    // Verifica se a execução foi bem-sucedida
-    if ($stmt->execute()) {
-        echo json_encode(["message" => "Prato adicionado com sucesso"]);
-        http_response_code(200);
-        exit;
-    } else {
-        echo json_encode(["message" => "Erro ao adicionar prato"]);
-        http_response_code(500);
-        exit;
-    }
-// ...
+        // Decodifica o token JWT
+        $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
-} elseif ($_SERVER["REQUEST_METHOD"] === "PUT") {
-    $data = json_decode(file_get_contents("php://input"));
+        // Verifica se o tipo de usuário é restaurante
+        if ($decoded->user_type !== 'restaurante') {
+            echo json_encode(["message" => "Utilizador não tem permissão para atualizar pratos"]);
+            http_response_code(403);
+            exit;
+        }
 
-    // Verifica se o ID do prato foi fornecido
-    if (empty($data->id)) {
-        echo json_encode(["message" => "ID do prato ausente"]);
-        http_response_code(400);
-        exit;
-    }
+        // Verifica se os campos obrigatórios estão presentes
+        if (
+            empty($data->id)
+            || empty($data->nome)
+            || empty($data->descricao)
+            || empty($data->preco)
+            || empty($data->imagem)
+            || empty($data->tipo)
+            || empty($data->disponivel)
+        ) {
+            echo json_encode(["message" => "Campos obrigatórios ausentes"]);
+            http_response_code(400);
+            exit;
+        }
 
-    // Verifica se os campos obrigatórios estão presentes
-    if (
-        empty($data->nome)
-        || empty($data->descricao)
-        || empty($data->preco)
-        || empty($data->imagem)
-        || empty($data->tipo)
-        || empty($data->disponivel)
-        || empty($data->restaurante_id)
-    ) {
-        echo json_encode(["message" => "Campos obrigatórios ausentes"]);
-        http_response_code(400);
-        exit;
-    }
+        // Verifica se o prato a ser atualizado existe
+        $check_prato_stmt = $conn->prepare("SELECT id, restaurante_id FROM pratos WHERE id = ?");
+        $check_prato_stmt->bind_param("i", $data->id);
+        $check_prato_stmt->execute();
+        $check_prato_result = $check_prato_stmt->get_result();
 
-    // Verifica se o prato a ser atualizado existe
-    $check_prato_stmt = $conn->prepare("SELECT id FROM pratos WHERE id = ? AND restaurante_id = ?");
-    $check_prato_stmt->bind_param("ii", $data->id, $data->restaurante_id);
-    $check_prato_stmt->execute();
-    $check_prato_result = $check_prato_stmt->get_result();
+        if ($check_prato_result->num_rows === 0) {
+            echo json_encode(["message" => "Prato não encontrado"]);
+            http_response_code(404);
+            exit;
+        }
 
-    if ($check_prato_result->num_rows === 0) {
-        echo json_encode(["message" => "Prato com ID {$data->id} não encontrado ou não pertence ao restaurante com ID {$data->restaurante_id}"]);
-        http_response_code(404);
-        exit;
-    }
+        $prato_info = $check_prato_result->fetch_assoc();
 
-    // Atualiza os dados do prato na tabela de pratos
-    $update_stmt = $conn->prepare("UPDATE pratos SET nome = ?, descricao = ?, preco = ?, imagem = ?, tipo = ?, disponivel = ?, restaurante_id = ? WHERE id = ?");
-    $update_stmt->bind_param("ssdssiii", $data->nome, $data->descricao, $data->preco, $data->imagem, $data->tipo, $data->disponivel, $data->restaurante_id, $data->id);
+        if ($prato_info['restaurante_id'] !== $decoded->user_id) {
+            echo json_encode(["message" => "Prato não pertence ao seu restaurante"]);
+            http_response_code(403);
+            exit;
+        }
 
-    // Verifica se a execução foi bem-sucedida
-    if ($update_stmt->execute()) {
-        echo json_encode(["message" => "Prato atualizado com sucesso"]);
-        http_response_code(200);
-        exit;
-    } else {
-        echo json_encode(["message" => "Erro ao atualizar prato"]);
-        http_response_code(500);
+        // Atualiza os dados do prato na tabela de pratos
+        $update_stmt = $conn->prepare("UPDATE pratos SET nome = ?, descricao = ?, preco = ?, imagem = ?, tipo = ?, disponivel = ? WHERE id = ? AND restaurante_id = ?");
+        $update_stmt->bind_param("ssdssiii", $data->nome, $data->descricao, $data->preco, $data->imagem, $data->tipo, $data->disponivel, $data->id, $decoded->user_id);
+
+        // Verifica se a execução foi bem-sucedida
+        if ($update_stmt->execute()) {
+            echo json_encode(["message" => "Prato atualizado com sucesso"]);
+            http_response_code(200);
+            exit;
+        } else {
+            echo json_encode(["message" => "Erro ao atualizar prato"]);
+            http_response_code(500);
+            exit;
+        }
+    } catch (Exception $e) {
+        echo json_encode(["message" => "Token inválido: " . $e->getMessage()]);
+        http_response_code(401);
         exit;
     }
 } else {
-
     echo json_encode(["message" => "Método não permitido"]);
     http_response_code(405);
     exit;

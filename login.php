@@ -5,18 +5,6 @@ use \Firebase\JWT\Key;
 
 include 'conexao.php';
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type");
-    http_response_code(200);
-    exit;
-}
-
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
@@ -58,11 +46,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Adicione outras informações necessárias ao payload
             ];
 
-            $key = 'seu_segredo'; // Chave secreta para assinar o token
-            $algorithm = 'HS256'; // Algoritmo de assinatura
+           // ...
 
-            // Gera o token usando a mesma sintaxe de decodificação
-            $token = JWT::encode($payload, new Key($key, 'HS256'), 'HS256');
+            $key = 'segredo'; // Chave secreta para assinar o token
+            $algorithm = 'HS256'; // Algoritmo de assinatura
+            $token = JWT::encode($payload, $key, $algorithm);
+
             echo json_encode(["token" => $token, "message" => "Login bem-sucedido como cliente"]);
             http_response_code(200);
             exit;
@@ -86,10 +75,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Adicione outras informações necessárias ao payload
             ];
 
-            $key = 'seu_segredo'; // Chave secreta para assinar o token
+            $key = 'segredo'; // Chave secreta para assinar o token
             $algorithm = 'HS256'; // Algoritmo de assinatura
-
-            $token = JWT::encode($payload, new Key($key, 'HS256'), 'HS256');
+            $token = JWT::encode($payload, $key, $algorithm);
+            
             echo json_encode(["token" => $token, "message" => "Login bem-sucedido como restaurante"]);
             http_response_code(200);
             exit;

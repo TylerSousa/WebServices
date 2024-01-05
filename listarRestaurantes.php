@@ -1,12 +1,19 @@
 <?php
 include 'conexao.php';
 header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
-header("Content-Type: application/json");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    // Seleciona todos os restaurantes da tabela
-    $selectStmt = $conn->prepare("SELECT nome FROM restaurantes");
+    $limit = isset($_GET['limit']) ? $_GET['limit'] : 10; // Número padrão de resultados por página
+    $page = isset($_GET['page']) ? $_GET['page'] : 1; // Página padrão
+
+    $offset = ($page - 1) * $limit; // Calcula o deslocamento para a paginação
+
+    // Seleciona os restaurantes com paginação
+    $selectStmt = $conn->prepare("SELECT nome FROM restaurantes LIMIT ? OFFSET ?");
+    $selectStmt->bind_param("ii", $limit, $offset);
     $selectStmt->execute();
     $result = $selectStmt->get_result();
 
@@ -23,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         http_response_code(200);
         exit;
     } else {
-        echo json_encode(["message" => "Nenhum restaurante registrado"]);
+        echo json_encode(["message" => "Nenhum restaurante encontrado"]);
         http_response_code(404);
         exit;
     }

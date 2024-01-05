@@ -1,56 +1,97 @@
 <?php
 require 'vendor/autoload.php';
-use \Firebase\JWT\JWT;
-use \Firebase\JWT\Key;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 include 'conexao.php';
-require 'verificarToken.php'; // Inclua o arquivo verificarToken.php
-
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: DELETE");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type");
-    http_response_code(200);
-    exit;
-}
-
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Defina o tipo de usuário aqui conforme a lógica do seu sistema
-$tipo_usuario = 'restaurante'; 
+if ($_SERVER["REQUEST_METHOD"] === "DELETE") {
+    // Obtém os dados enviados na requisição DELETE
+    $json_data = file_get_contents("php://input");
+    $data = json_decode($json_data);
 
-if ($_SERVER["REQUEST_METHOD"] === "DELETE" && $tipo_usuario == 'restaurante') {
-    $data = json_decode(file_get_contents("php://input"));
+    // Verifica se o token está presente nos headers
+    $headers = getallheaders();
+    $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-    // Verifica se o ID do prato a ser excluído foi enviado
-    if (empty($data->prato_id)) {
-        echo json_encode(["message" => "ID do prato não fornecido"]);
-        http_response_code(400);
+    // Trim the token to remove whitespace or unexpected characters
+    $token = trim($token);
+
+    // Remove "Bearer " prefix if it's included
+    $token = str_replace("Bearer ", "", $token);
+
+    if (!$token) {
+        echo json_encode(["message" => "Token não fornecido"]);
+        http_response_code(401);
         exit;
     }
 
-    $prato_id = $data->prato_id;
+    try {
+        $key = 'segredo'; // Chave secreta para assinar o token
+        $algorithm = 'HS256'; // Algoritmo de assinatura
+    
+        // Decodifica o token JWT
+        $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
-    // Exclui o prato
-    $stmt_delete = $conn->prepare("DELETE FROM pratos WHERE id = ?");
-    $stmt_delete->bind_param("i", $prato_id);
-    $stmt_delete->execute();
+        // Verifica se o tipo de usuário é restaurante
+        if ($decoded->user_type !== 'restaurante') {
+            echo json_encode(["message" => "Utilizador não tem permissão para excluir pratos"]);
+            http_response_code(403);
+            exit;
+        }
 
-    // Verifica se algum registro foi afetado pela exclusão
-    if ($stmt_delete->affected_rows > 0) {
-        echo json_encode(["message" => "Prato excluído com sucesso"]);
-        http_response_code(200);
-        exit;
-    } else {
-        echo json_encode(["message" => "Prato não encontrado"]);
-        http_response_code(404);
+        // Verifica se o ID do prato a ser excluído foi enviado
+        if (empty($data->prato_id)) {
+            echo json_encode(["message" => "ID do prato não fornecido"]);
+            http_response_code(400);
+            exit;
+        }
+
+        $prato_id = $data->prato_id;
+
+        // Verifica se o restaurante associado ao prato é o mesmo do token
+        $check_prato_stmt = $conn->prepare("SELECT restaurante_id FROM pratos WHERE id = ?");
+        $check_prato_stmt->bind_param("i", $prato_id);
+        $check_prato_stmt->execute();
+        $check_prato_result = $check_prato_stmt->get_result();
+
+        if ($check_prato_result->num_rows === 0) {
+            echo json_encode(["message" => "Prato não encontrado"]);
+            http_response_code(404);
+            exit;
+        }
+
+        $row = $check_prato_result->fetch_assoc();
+        $restaurante_id_do_prato = $row['restaurante_id'];
+
+        if ($restaurante_id_do_prato != $decoded->user_id) {
+            echo json_encode(["message" => "Não autorizado a excluir este prato"]);
+            http_response_code(403);
+            exit;
+        }
+
+        // Exclui o prato
+        $stmt_delete = $conn->prepare("DELETE FROM pratos WHERE id = ?");
+        $stmt_delete->bind_param("i", $prato_id);
+        $stmt_delete->execute();
+
+        // Verifica se algum registro foi afetado pela exclusão
+        if ($stmt_delete->affected_rows > 0) {
+            echo json_encode(["message" => "Prato excluído com sucesso"]);
+            http_response_code(200);
+            exit;
+        } else {
+            echo json_encode(["message" => "Prato não encontrado"]);
+            http_response_code(404);
+            exit;
+        }
+    } catch (Exception $e) {
+        echo json_encode(["message" => "Token inválido: " . $e->getMessage()]);
+        http_response_code(401);
         exit;
     }
 }
