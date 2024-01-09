@@ -1,0 +1,62 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Pratos'
+  description: 'API para consulta de pratos'
+
+paths:
+  /pratos:
+    get:
+      summary: Lista de pratos paginada por tipo
+      description: Retorna uma lista de pratos filtrada por tipo com paginação.
+      tags:
+        - Pratos
+      parameters:
+        - in: query
+          name: tipo
+          description: Tipo de prato a ser filtrado
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Número de resultados por página
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          description: Número da página
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Lista de pratos retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    nome:
+                      type: string
+                    descricao:
+                      type: string
+                    preco:
+                      type: number
+                    imagem:
+                      type: string
+                    tipo:
+                      type: string
+                    disponivel:
+                      type: boolean
+                    restaurante:
+                      type: string
+        '400':
+          description: Parâmetro 'tipo' ausente na requisição
+        '404':
+          description: Nenhum prato encontrado para o tipo especificado
+      security: []

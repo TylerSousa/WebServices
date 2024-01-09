@@ -12,14 +12,11 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 if ($_SERVER["REQUEST_METHOD"] === "PUT") {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Verifica se o token está presente nos headers
     $headers = getallheaders();
     $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-    // Trim the token to remove whitespace or unexpected characters
     $token = trim($token);
 
-    // Remove "Bearer " prefix if it's included
     $token = str_replace("Bearer ", "", $token);
 
     if (!$token) {
@@ -29,20 +26,17 @@ if ($_SERVER["REQUEST_METHOD"] === "PUT") {
     }
 
     try {
-        $key = 'segredo'; // Chave secreta para assinar o token
-        $algorithm = 'HS256'; // Algoritmo de assinatura
+        $key = 'segredo';
+        $algorithm = 'HS256';
     
-        // Decodifica o token JWT
         $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
-        // Verifica se o tipo de usuário é restaurante
         if ($decoded->user_type !== 'restaurante') {
             echo json_encode(["message" => "Utilizador não tem permissão para atualizar pratos"]);
             http_response_code(403);
             exit;
         }
 
-        // Verifica se os campos obrigatórios estão presentes
         if (
             empty($data->id)
             || empty($data->nome)
@@ -57,7 +51,6 @@ if ($_SERVER["REQUEST_METHOD"] === "PUT") {
             exit;
         }
 
-        // Verifica se o prato a ser atualizado existe
         $check_prato_stmt = $conn->prepare("SELECT id, restaurante_id FROM pratos WHERE id = ?");
         $check_prato_stmt->bind_param("i", $data->id);
         $check_prato_stmt->execute();
@@ -77,11 +70,9 @@ if ($_SERVER["REQUEST_METHOD"] === "PUT") {
             exit;
         }
 
-        // Atualiza os dados do prato na tabela de pratos
         $update_stmt = $conn->prepare("UPDATE pratos SET nome = ?, descricao = ?, preco = ?, imagem = ?, tipo = ?, disponivel = ? WHERE id = ? AND restaurante_id = ?");
         $update_stmt->bind_param("ssdssiii", $data->nome, $data->descricao, $data->preco, $data->imagem, $data->tipo, $data->disponivel, $data->id, $decoded->user_id);
 
-        // Verifica se a execução foi bem-sucedida
         if ($update_stmt->execute()) {
             echo json_encode(["message" => "Prato atualizado com sucesso"]);
             http_response_code(200);

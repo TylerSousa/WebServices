@@ -10,18 +10,14 @@ header("Access-Control-Allow-Methods: DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER["REQUEST_METHOD"] === "DELETE") {
-    // Obtém os dados enviados na requisição DELETE
     $json_data = file_get_contents("php://input");
     $data = json_decode($json_data);
 
-    // Verifica se o token está presente nos headers
     $headers = getallheaders();
     $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-    // Trim the token to remove whitespace or unexpected characters
     $token = trim($token);
 
-    // Remove "Bearer " prefix if it's included
     $token = str_replace("Bearer ", "", $token);
 
     if (!$token) {
@@ -31,20 +27,17 @@ if ($_SERVER["REQUEST_METHOD"] === "DELETE") {
     }
 
     try {
-        $key = 'segredo'; // Chave secreta para assinar o token
-        $algorithm = 'HS256'; // Algoritmo de assinatura
+        $key = 'segredo';
+        $algorithm = 'HS256';
     
-        // Decodifica o token JWT
         $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
-        // Verifica se o tipo de usuário é restaurante
         if ($decoded->user_type !== 'restaurante') {
             echo json_encode(["message" => "Utilizador não tem permissão para excluir pratos"]);
             http_response_code(403);
             exit;
         }
 
-        // Verifica se o ID do prato a ser excluído foi enviado
         if (empty($data->prato_id)) {
             echo json_encode(["message" => "ID do prato não fornecido"]);
             http_response_code(400);
@@ -53,7 +46,6 @@ if ($_SERVER["REQUEST_METHOD"] === "DELETE") {
 
         $prato_id = $data->prato_id;
 
-        // Verifica se o restaurante associado ao prato é o mesmo do token
         $check_prato_stmt = $conn->prepare("SELECT restaurante_id FROM pratos WHERE id = ?");
         $check_prato_stmt->bind_param("i", $prato_id);
         $check_prato_stmt->execute();
@@ -74,12 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] === "DELETE") {
             exit;
         }
 
-        // Exclui o prato
         $stmt_delete = $conn->prepare("DELETE FROM pratos WHERE id = ?");
         $stmt_delete->bind_param("i", $prato_id);
         $stmt_delete->execute();
 
-        // Verifica se algum registro foi afetado pela exclusão
         if ($stmt_delete->affected_rows > 0) {
             echo json_encode(["message" => "Prato excluído com sucesso"]);
             http_response_code(200);

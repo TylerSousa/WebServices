@@ -1,0 +1,43 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Restaurantes'
+  description: 'API para consulta de restaurantes'
+
+paths:
+  /restaurantes:
+    get:
+      summary: Lista de restaurantes paginada
+      description: Retorna uma lista de restaurantes com paginação.
+      tags:
+        - Restaurantes
+      parameters:
+        - in: query
+          name: limit
+          description: Número de resultados por página
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          description: Número da página
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Lista de restaurantes retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    nome:
+                      type: string
+        '404':
+          description: Nenhum restaurante encontrado
+        '405':
+          description: Método não permitido

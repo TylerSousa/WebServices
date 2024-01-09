@@ -16,7 +16,7 @@ $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
 
 
-// Lógica de login
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"));
 
@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $data->email;
     $password = $data->password;
 
-    // Verifica se o usuário é um cliente
+   
     $stmt = $conn->prepare("SELECT id, email, password FROM clientes WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -43,13 +43,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $payload = [
                 "user_id" => $row['id'],
                 "user_type" => "cliente"
-                // Adicione outras informações necessárias ao payload
+                
             ];
 
-           // ...
+          
 
-            $key = 'segredo'; // Chave secreta para assinar o token
-            $algorithm = 'HS256'; // Algoritmo de assinatura
+            $key = 'segredo'; 
+            $algorithm = 'HS256'; 
             $token = JWT::encode($payload, $key, $algorithm);
 
             echo json_encode(["token" => $token, "message" => "Login bem-sucedido como cliente"]);
@@ -58,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    // Verifica se o usuário é um restaurante
+    
     $stmt = $conn->prepare("SELECT id, email, password FROM restaurantes WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -72,11 +72,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $payload = [
                 "user_id" => $row['id'],
                 "user_type" => "restaurante"
-                // Adicione outras informações necessárias ao payload
+                
             ];
 
-            $key = 'segredo'; // Chave secreta para assinar o token
-            $algorithm = 'HS256'; // Algoritmo de assinatura
+            $key = 'segredo'; 
+            $algorithm = 'HS256'; 
             $token = JWT::encode($payload, $key, $algorithm);
             
             echo json_encode(["token" => $token, "message" => "Login bem-sucedido como restaurante"]);

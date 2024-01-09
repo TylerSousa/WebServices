@@ -1,0 +1,50 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Exclusão de Pratos'
+  description: 'API para excluir pratos'
+
+paths:
+  /pratos/{prato_id}:
+    delete:
+      summary: Exclui um prato
+      description: Exclui um prato específico usando o ID do prato.
+      tags:
+        - Pratos
+      parameters:
+        - in: path
+          name: prato_id
+          description: ID do prato a ser excluído
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Dados da requisição DELETE
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prato_id:
+                  type: integer
+                  description: ID do prato a ser excluído
+      responses:
+        '200':
+          description: Prato excluído com sucesso
+        '401':
+          description: Token não fornecido ou inválido
+        '403':
+          description: Utilizador não tem permissão para excluir pratos ou não autorizado a excluir este prato
+        '404':
+          description: Prato não encontrado
+      security: 
+        - BearerAuth: []
+      servers:
+        - url: 'http://localhost:3000/api'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

@@ -6,26 +6,22 @@ header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    $limit = isset($_GET['limit']) ? $_GET['limit'] : 10; // Número padrão de resultados por página
-    $page = isset($_GET['page']) ? $_GET['page'] : 1; // Página padrão
+    $limit = isset($_GET['limit']) ? $_GET['limit'] : 10; 
+    $page = isset($_GET['page']) ? $_GET['page'] : 1; 
 
-    $offset = ($page - 1) * $limit; // Calcula o deslocamento para a paginação
+    $offset = ($page - 1) * $limit; 
 
-    // Seleciona os restaurantes com paginação
     $selectStmt = $conn->prepare("SELECT nome FROM restaurantes LIMIT ? OFFSET ?");
     $selectStmt->bind_param("ii", $limit, $offset);
     $selectStmt->execute();
     $result = $selectStmt->get_result();
 
-    // Verifica se há restaurantes
     if ($result->num_rows > 0) {
-        // Constrói um array associativo com os dados dos restaurantes
         $restaurantes = [];
         while ($row = $result->fetch_assoc()) {
             $restaurantes[] = $row;
         }
 
-        // Retorna a lista de restaurantes em formato JSON
         echo json_encode($restaurantes);
         http_response_code(200);
         exit;

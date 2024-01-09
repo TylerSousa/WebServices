@@ -1,0 +1,36 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'Nome do seu Projeto'
+  description: 'Descrição da sua API'
+  license:
+    name: 'Licença'
+
+paths:
+  /register:
+    post:
+      summary: 'Registra um novo cliente'
+      description: 'Registra um novo cliente na tabela de clientes.'
+      tags:
+        - 'Clientes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: 'Registro bem-sucedido do cliente'
+        '400':
+          description: 'Este email já está sendo utilizado ou campos obrigatórios ausentes'
+        '500':
+          description: 'Erro ao inserir dados do cliente'

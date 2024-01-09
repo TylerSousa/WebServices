@@ -12,14 +12,11 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Verifica se o token está presente nos headers
     $headers = getallheaders();
     $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-    // Trim the token to remove whitespace or unexpected characters
     $token = trim($token);
 
-    // Remove "Bearer " prefix if it's included
     $token = str_replace("Bearer ", "", $token);
 
     if (!$token) {
@@ -29,20 +26,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     try {
-        $key = 'segredo'; // Chave secreta para assinar o token
-        $algorithm = 'HS256'; // Algoritmo de assinatura
+        $key = 'segredo';
+        $algorithm = 'HS256';
     
-        // Decodifica o token JWT
         $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
-        // Verifica se o tipo de usuário é cliente
         if ($decoded->user_type !== 'cliente') {
             echo json_encode(["message" => "Utilizador não tem permissão para efetuar reservas"]);
             http_response_code(403);
             exit;
         }
 
-        // Verifica se os campos obrigatórios estão presentes
         if (
             empty($data->prato_id)
             || empty($data->quantidade)
@@ -53,7 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
-        // Verifica se o prato_id existe na tabela de pratos e se a quantidade é suficiente
         $check_prato_stmt = $conn->prepare("SELECT disponivel FROM pratos WHERE id = ?");
         $check_prato_stmt->bind_param("i", $data->prato_id);
         $check_prato_stmt->execute();
@@ -74,12 +67,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
-        // Insere os dados na tabela de reservas usando o user_id do token como cliente_id
         $insert_stmt = $conn->prepare("INSERT INTO reservas (prato_id, quantidade, data_reserva, cliente_id) VALUES (?, ?, ?, ?)");
         $insert_stmt->bind_param("iisi", $data->prato_id, $data->quantidade, $data->data_reserva, $decoded->user_id);
 
         if ($insert_stmt->execute()) {
-            // Diminuir a quantidade de pratos disponíveis após a reserva
             $update_stmt = $conn->prepare("UPDATE pratos SET disponivel = disponivel - ? WHERE id = ?");
             $update_stmt->bind_param("ii", $data->quantidade, $data->prato_id);
             $update_stmt->execute();

@@ -1,7 +1,7 @@
 <?php
 $hostname = 'localhost';
 $username = 'root';
-$password = '2Typernanegra2!';
+$password = '';
 $dbname = 'autenticador';
 $dbport = 3306;
 

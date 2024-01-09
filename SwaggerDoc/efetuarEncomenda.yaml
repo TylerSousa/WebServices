@@ -1,0 +1,54 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Reservas'
+  description: 'API para efetuar reservas de pratos'
+
+paths:
+  /reservas:
+    post:
+      summary: Efetua uma reserva
+      description: Efetua uma reserva de um prato específico.
+      tags:
+        - Reservas
+      requestBody:
+        description: Dados da requisição POST
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prato_id:
+                  type: integer
+                  description: ID do prato a ser reservado
+                quantidade:
+                  type: integer
+                  description: Quantidade desejada do prato
+                data_reserva:
+                  type: string
+                  format: date
+                  description: Data da reserva (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Reserva efetuada com sucesso
+        '400':
+          description: Campos obrigatórios ausentes ou quantidade solicitada maior do que a disponível
+        '401':
+          description: Token não fornecido ou inválido
+        '403':
+          description: Utilizador não tem permissão para efetuar reservas
+        '404':
+          description: Prato com ID não encontrado
+        '500':
+          description: Erro ao efetuar reserva
+      security:
+        - BearerAuth: []
+      servers:
+        - url: 'http://localhost:3000/api'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

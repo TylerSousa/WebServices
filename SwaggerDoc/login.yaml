@@ -1,0 +1,62 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'Nome do seu Projeto'
+  description: 'Descrição da sua API'
+  license:
+    name: 'Licença'
+
+paths:
+  /login:
+    post:
+      summary: 'Utilizador'
+      description: 'Autentica um utilizador (cliente ou restaurante) e gera um token JWT.'
+      tags:
+        - 'Autenticação'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: 'object'
+              properties:
+                email:
+                  type: 'string'
+                password:
+                  type: 'string'
+      responses:
+        '200':
+          description: 'Login bem-sucedido. Retorna um token JWT.'
+        '401':
+          description: 'Credenciais inválidas.'
+        '405':
+          description: 'Método não permitido.'
+
+components:
+  schemas:
+    Model:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+    Schema:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+      description: 'ID do modelo'
+
+  requestBodies:
+    LoginRequest:
+      description: 'Corpo da requisição para autenticação'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Model'
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/XICOPIMENTA22/WBS/1.0.0

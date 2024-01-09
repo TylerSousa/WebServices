@@ -1,0 +1,50 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Restaurantes'
+  description: 'API para registro de restaurantes'
+
+paths:
+  /register:
+    post:
+      summary: Registra um novo restaurante
+      description: Registra um novo restaurante na tabela de restaurantes.
+      tags:
+        - Restaurantes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome:
+                  type: string
+                contribuinte:
+                  type: string
+                telemovel:
+                  type: string
+                rua:
+                  type: string
+                porta:
+                  type: string
+                localizacao:
+                  type: string
+                pais:
+                  type: string
+                codPostal:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Registro bem-sucedido do restaurante
+        '400':
+          description: Email já utilizado ou campos obrigatórios ausentes
+        '405':
+          description: Método não permitido
+        '500':
+          description: Erro ao inserir dados

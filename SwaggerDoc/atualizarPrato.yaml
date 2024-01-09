@@ -1,0 +1,67 @@
+openapi: 3.0.0
+
+info:
+  version: '1.0.0'
+  title: 'API de Atualização de Pratos'
+  description: 'API para atualizar informações de pratos em restaurantes'
+
+paths:
+  /pratos:
+    put:
+      summary: Atualiza um prato
+      description: Atualiza as informações de um prato específico.
+      tags:
+        - Pratos
+      requestBody:
+        description: Dados da requisição PUT
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID do prato a ser atualizado
+                nome:
+                  type: string
+                  description: Nome do prato
+                descricao:
+                  type: string
+                  description: Descrição do prato
+                preco:
+                  type: number
+                  format: double
+                  description: Preço do prato
+                imagem:
+                  type: string
+                  description: URL da imagem do prato
+                tipo:
+                  type: string
+                  description: Tipo do prato
+                disponivel:
+                  type: integer
+                  description: Quantidade disponível do prato
+      responses:
+        '200':
+          description: Prato atualizado com sucesso
+        '400':
+          description: Campos obrigatórios ausentes
+        '401':
+          description: Token não fornecido ou inválido
+        '403':
+          description: Utilizador não tem permissão para atualizar pratos
+        '404':
+          description: Prato não encontrado
+        '500':
+          description: Erro ao atualizar prato
+      security:
+        - BearerAuth: []
+      servers:
+        - url: 'http://localhost:3000/api'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
